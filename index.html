@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B100 Brasil — Inteligência de Mercado de Biodiesel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d1117; --ink-2:#3a4150; --ink-3:#7a8394; --ink-4:#b0b8c4;
+  --paper:#f5f4f1; --paper-2:#ede9e3; --paper-3:#e4dfd7;
+  --border:rgba(13,17,23,.09); --border-2:rgba(13,17,23,.18);
+  /* Brand green for B100 */
+  --grn:#1a7a3c; --grn-lt:rgba(26,122,60,.10); --grn-md:rgba(26,122,60,.18);
+  --grn-2:#2d9e54;
+  --amber:#d97706; --amber-lt:rgba(217,119,6,.10);
+  --red:#c92a2a; --red-lt:rgba(201,42,42,.08);
+  --blue:#1a56db; --blue-lt:rgba(26,86,219,.10);
+  --navy:#0f2040; --gold:#c8962a;
+  --r:10px; --r-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg:0 2px 8px rgba(0,0,0,.08),0 12px 40px rgba(0,0,0,.07);
+  --f-display:'DM Serif Display',Georgia,serif;
+  --f-ui:'Syne',system-ui,sans-serif;
+  --f-data:'DM Mono','Courier New',monospace;
+}
+body{font-family:var(--f-ui);background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── LOADING ── */
+#ld{position:fixed;inset:0;background:var(--navy);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.ld-logo{font-family:var(--f-display);font-size:28px;color:#fff;letter-spacing:-.01em}
+.ld-logo span{color:#4ade80}
+.ld-sub{font-family:var(--f-data);font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;margin-top:-12px}
+.ld-bar-wrap{width:200px;height:2px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
+.ld-bar{height:2px;background:#4ade80;border-radius:2px;width:0;transition:width .35s}
+#lpct{font-family:var(--f-data);font-size:11px;color:#4ade80;font-weight:500}
+.ld-steps{display:flex;flex-direction:column;gap:5px;text-align:center}
+.ls{font-family:var(--f-data);font-size:10px;color:rgba(255,255,255,.25);transition:color .2s;letter-spacing:.04em}
+.ls.on{color:rgba(255,255,255,.8);font-weight:500}
+.ls.ok{color:#4ade80}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── TOP BAND ── */
+.topband{background:var(--navy)}
+.topband-inner{max-width:1140px;margin:0 auto;padding:.6rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tb-wordmark{font-family:var(--f-display);font-size:17px;color:#fff;letter-spacing:-.01em}
+.tb-wordmark em{color:#4ade80;font-style:normal}
+.tb-divider{width:1px;height:14px;background:rgba(255,255,255,.2)}
+.tb-desc{font-family:var(--f-data);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.06em;text-transform:uppercase}
+.tb-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-family:var(--f-data);font-size:10px;letter-spacing:.04em;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5)}
+.pill.live{border-color:rgba(74,222,128,.4);color:#4ade80;background:rgba(74,222,128,.1)}
+.pill.live::before{content:'';width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;animation:pulse 2s infinite}
+
+/* ── SOURCE BAR ── */
+.srcbar{background:var(--paper-2);border-bottom:1px solid var(--border)}
+.srcbar-inner{max-width:1140px;margin:0 auto;padding:.5rem 1.5rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.src-dot{width:5px;height:5px;border-radius:50%;background:var(--grn);flex-shrink:0}
+.src-txt{font-family:var(--f-data);font-size:10px;color:var(--ink-3);letter-spacing:.03em}
+.src-txt a{color:var(--blue);text-decoration:none}
+.src-sep{width:1px;height:10px;background:var(--border-2)}
+
+/* ── MANDATO BANNER ── */
+.mandato-bar{background:linear-gradient(135deg,var(--grn) 0%,#238a49 100%);color:#fff}
+.mandato-inner{max-width:1140px;margin:0 auto;padding:.55rem 1.5rem;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.mandato-label{font-family:var(--f-data);font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
+.mandato-steps{display:flex;gap:4px;flex-wrap:wrap}
+.ms{font-family:var(--f-data);font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.12);opacity:.6}
+.ms.cur{background:rgba(255,255,255,.25);opacity:1;font-weight:600}
+.ms.fut{border:1px solid rgba(255,255,255,.3);background:transparent;opacity:.5}
+
+/* ── FILTERS ── */
+.filters{background:rgba(245,244,241,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.filters-inner{max-width:1140px;margin:0 auto;padding:.65rem 1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.f-label{font-family:var(--f-data);font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.f-select{font-family:var(--f-data);font-size:12px;font-weight:500;padding:5px 28px 5px 10px;border:1px solid var(--border-2);border-radius:var(--r-sm);background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8394'/%3E%3C/svg%3E") no-repeat right 9px center;color:var(--ink);appearance:none;cursor:pointer;transition:border-color .15s}
+.f-select:focus{outline:none;border-color:var(--grn)}
+.f-sep{width:1px;height:18px;background:var(--border-2);margin:0 2px}
+.tg{display:flex;gap:2px;background:var(--paper-3);padding:2px;border-radius:var(--r-sm)}
+.t{font-family:var(--f-data);font-size:10px;font-weight:500;padding:4px 10px;border-radius:4px;border:none;cursor:pointer;background:transparent;color:var(--ink-3);transition:all .12s;letter-spacing:.02em;white-space:nowrap}
+.t.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+
+/* ── PAGE ── */
+.pg{max-width:1140px;margin:0 auto;padding:0 1.5rem 5rem}
+
+/* ── KPIS ── */
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1.25rem 0}
+@media(max-width:700px){.kgrid{grid-template-columns:repeat(2,1fr)}}
+.kcard{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 18px 14px;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .2s}
+.kcard:hover{box-shadow:var(--shadow-lg)}
+.kcard::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc,var(--grn))}
+.kcard .kl{font-family:var(--f-data);font-size:9px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.kcard .kv{font-family:var(--f-display);font-size:22px;color:var(--ink);line-height:1;letter-spacing:-.02em;margin-bottom:4px}
+.kcard .ks{font-family:var(--f-data);font-size:10px;color:var(--ink-3);margin-bottom:6px}
+.badge{display:inline-block;font-family:var(--f-data);font-size:9px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.03em}
+.badge.up{background:var(--grn-lt);color:var(--grn)}
+.badge.dn{background:var(--red-lt);color:var(--red)}
+.badge.n{background:var(--paper-2);color:var(--ink-3);border:1px solid var(--border)}
+
+/* ── CARDS ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow)}
+.card-full{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:10px}
+.card h3,.card-full h3{font-family:var(--f-data);font-size:9px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.g2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;margin-bottom:10px}
+.g2-equal{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px}
+@media(max-width:740px){.g2,.g2-equal{grid-template-columns:1fr}}
+.ch{position:relative;width:100%}
+.h200{height:200px}.h185{height:185px}.h160{height:160px}.h150{height:150px}
+
+/* ── LEGEND ── */
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.li{display:flex;align-items:center;gap:5px;font-family:var(--f-data);font-size:10px;color:var(--ink-3)}
+.lq{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.li strong{color:var(--ink-2)}
+
+/* ── RANK BARS ── */
+.rank-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-family:var(--f-data);font-size:11px}
+.rank-uf{width:80px;font-weight:600;color:var(--ink-2);flex-shrink:0;font-size:10px}
+.rank-bg{flex:1;background:var(--paper-2);border-radius:3px;height:6px;overflow:hidden}
+.rank-fill{height:6px;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.rank-pct{width:38px;text-align:right;color:var(--ink-2);font-weight:600;flex-shrink:0}
+.rank-val{width:90px;text-align:right;color:var(--ink-3);flex-shrink:0;font-size:10px}
+
+/* ── PIE ── */
+.pie-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
+.psi{padding:7px 9px;background:var(--paper-2);border-radius:var(--r-sm);text-align:center}
+.psi .pv{font-family:var(--f-display);font-size:14px;color:var(--ink);letter-spacing:-.01em}
+.psi .pl{font-family:var(--f-data);font-size:9px;color:var(--ink-3);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+
+/* ── MAP ── */
+.map-wrap{position:relative;width:100%}
+.state-path{stroke:#fff;stroke-width:.8;cursor:pointer;transition:opacity .15s}
+.state-path:hover{opacity:.75}
+.map-tooltip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;border-radius:var(--r-sm);padding:10px 14px;font-family:var(--f-data);font-size:10px;line-height:1.75;box-shadow:0 4px 24px rgba(0,0,0,.25);min-width:200px;max-width:260px;z-index:99;display:none}
+.map-tooltip .mt-title{font-size:13px;font-weight:700;margin-bottom:6px;color:#fff;font-family:var(--f-ui)}
+.map-tooltip .mt-row{display:flex;justify-content:space-between;gap:12px;opacity:.9}
+.map-tooltip .mt-val{color:#4ade80;font-weight:600;white-space:nowrap}
+.map-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.ml-item{display:flex;align-items:center;gap:5px;font-family:var(--f-data);font-size:10px;color:var(--ink-3)}
+.ml-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* ── SECTION SEP ── */
+.section-sep{display:flex;align-items:center;gap:10px;margin:1.75rem 0 .85rem}
+.section-sep span{font-family:var(--f-data);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-4);white-space:nowrap}
+.section-sep::before,.section-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── NOTE ── */
+.note{font-family:var(--f-data);font-size:10px;color:var(--ink-4);margin-top:8px;line-height:1.6}
+.note.warn{color:var(--amber);background:var(--amber-lt);padding:6px 10px;border-radius:var(--r-sm);border-left:2px solid var(--amber)}
+
+/* ── NO DATA ── */
+.nodata{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:2.5rem;text-align:center;color:var(--ink-3)}
+.nodata .nd-icon{font-size:24px}
+.nodata strong{font-family:var(--f-ui);font-size:13px;font-weight:600;color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="ld">
+  <div class="ld-logo">B100<span>Brasil</span></div>
+  <div class="ld-sub">Inteligência de Mercado · Biodiesel</div>
+  <div class="ld-bar-wrap"><div class="ld-bar" id="lb"></div></div>
+  <div id="lpct">0%</div>
+  <div class="ld-steps">
+    <div class="ls" id="s1">Carregando produção mensal ANP (2020–2025)</div>
+    <div class="ls" id="s2">Consolidando dados por região e ano</div>
+    <div class="ls" id="s3">Renderizando dashboard</div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+
+<!-- TOP BAND -->
+<div class="topband">
+  <div class="topband-inner">
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="tb-wordmark">B100<em>Brasil</em></div>
+      <div class="tb-divider"></div>
+      <div class="tb-desc">Mercado de Biodiesel</div>
+    </div>
+    <div class="tb-right">
+      <div class="pill" id="upd">—</div>
+      <div class="pill live" id="dbd">● ANP ao vivo</div>
+    </div>
+  </div>
+</div>
+
+<!-- MANDATO BANNER -->
+<div class="mandato-bar">
+  <div class="mandato-inner">
+    <span class="mandato-label">Mandato de mistura obrigatória ao diesel fóssil</span>
+    <div class="mandato-steps">
+      <span class="ms">B10 (2019)</span>
+      <span class="ms">B11 (2020)</span>
+      <span class="ms">B12 (2021–2022)</span>
+      <span class="ms">B13 (2023)</span>
+      <span class="ms cur">B14 (2024)</span>
+      <span class="ms cur">B15 (2025)</span>
+      <span class="ms fut">B16 (2026) →</span>
+    </div>
+  </div>
+</div>
+
+<!-- SOURCE BAR -->
+<div class="srcbar">
+  <div class="srcbar-inner">
+    <span class="src-dot"></span>
+    <span class="src-txt">ANP dados abertos — produção B100 mensal por região</span>
+    <span class="src-sep"></span>
+    <span class="src-txt"><a href="https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/producao-de-biocombustiveis" target="_blank">ANP biocombustíveis ↗</a></span>
+    <span class="src-sep"></span>
+    <span class="src-txt">Histórico nacional: ANP Anuário 2025 Tab. 4.10 · Preços: ANP boletim semanal</span>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <div class="filters-inner">
+    <span class="f-label">Região</span>
+    <select id="regSel" class="f-select" onchange="render()">
+      <option value="BR">🇧🇷 Brasil (total)</option>
+      <option value="SUL">Sul</option>
+      <option value="CO">Centro-Oeste</option>
+      <option value="NE">Nordeste</option>
+      <option value="SE">Sudeste</option>
+      <option value="NO">Norte</option>
+    </select>
+    <span class="f-sep"></span>
+    <span class="f-label">Ano</span>
+    <select id="yrSel" class="f-select" onchange="render()"></select>
+    <span class="f-sep"></span>
+    <span class="f-label">Série</span>
+    <div class="tg">
+      <button class="t on" onclick="setMetric('prod',this)">Produção</button>
+      <button class="t"    onclick="setMetric('mandato',this)">Mandato</button>
+    </div>
+  </div>
+</div>
+
+<div class="pg">
+  <div class="kgrid" id="kpis"></div>
+
+  <!-- Série histórica nacional -->
+  <div class="section-sep"><span>Produção Nacional — Série Histórica</span></div>
+  <div class="card-full">
+    <h3>Produção nacional de B100 — 2005–2025 (mil m³/ano)</h3>
+    <div class="legend">
+      <span class="li"><span class="lq" style="background:var(--grn)"></span>
+        <strong>Produção real</strong>&nbsp;— ANP Anuário 2025 Tab. 4.10 (2005–2024) + dados mensais 2025
+      </span>
+      <span class="li"><span class="lq" style="background:var(--amber)"></span>
+        <strong>Consumo real B100</strong>&nbsp;— ANP seminários anuais (dado direto) / produção como proxy
+      </span>
+    </div>
+    <div class="ch h200"><canvas id="cHist"></canvas></div>
+    <p class="note" id="ntHist"></p>
+  </div>
+
+  <!-- Produção mensal + Ranking regional -->
+  <div class="section-sep"><span>Distribuição Regional — <span id="anoLabel">—</span></span></div>
+  <div class="g2">
+    <div class="card">
+      <h3>Produção mensal <span id="mthRegLabel"></span></h3>
+      <div class="ch h185"><canvas id="cMensal"></canvas></div>
+      <p class="note" id="ntMensal"></p>
+    </div>
+    <div class="card">
+      <h3>Ranking de produção por região — <span id="anoRank">—</span></h3>
+      <div id="rankWrap"></div>
+      <p class="note" id="ntRank"></p>
+    </div>
+  </div>
+
+  <!-- Mix matéria-prima + Preços -->
+  <div class="section-sep"><span>Matéria-Prima e Preços</span></div>
+  <div class="g2-equal">
+    <div class="card">
+      <h3>Mix de matéria-prima B100 — 2024</h3>
+      <div class="legend">
+        <span class="li"><span class="lq" style="background:#1a7a3c"></span>Soja</span>
+        <span class="li"><span class="lq" style="background:#d97706"></span>Gordura bovina</span>
+        <span class="li"><span class="lq" style="background:#1a56db"></span>Mat. graxos / fritura</span>
+        <span class="li"><span class="lq" style="background:#64748b"></span>Outros</span>
+      </div>
+      <div class="ch h160"><canvas id="cMix"></canvas></div>
+      <p class="note">Fonte: ANP Anuário 2025 Tab. 4.13. A soja domina com 74% do mix em 2024. "Outros materiais graxos" (resíduos industriais e fritura) crescem como rota circular, com 14%. Gordura bovina representa 6%.</p>
+    </div>
+    <div class="card">
+      <h3>Preço B100 vs Diesel fóssil (R$/m³) — 2019–2024</h3>
+      <div class="legend">
+        <span class="li"><span class="lq" style="background:#1a7a3c"></span>
+          <strong>B100 produtor</strong>&nbsp;(ANP, R$/m³, eixo esq.)
+        </span>
+        <span class="li"><span class="lq" style="background:#c92a2a"></span>
+          <strong>Diesel A S10</strong>&nbsp;(Petrobras refin., R$/m³, eixo dir.)
+        </span>
+      </div>
+      <div class="ch h160"><canvas id="cPreco"></canvas></div>
+      <p class="note">Fontes: ANP boletim semanal (B100) · Petrobras/ANP (Diesel A S10). B14 em 2024 significa que 14% de cada litro de diesel B é biodiesel.</p>
+    </div>
+  </div>
+
+  <!-- Mapa de produção -->
+  <div class="section-sep"><span>Mapa de Produção por Estado</span></div>
+  <div class="g2">
+    <div class="card">
+      <h3 id="mapTitle">Produção por estado — 2024</h3>
+      <p class="note warn" style="margin-bottom:10px">⚠ A ANP restringe dados por UF quando há menos de 3 produtores no mês. O mapa reflete a distribuição estrutural por grandes regiões produtoras.</p>
+      <div class="map-wrap" id="mapWrap">
+        <div class="map-tooltip" id="mapTip" style="display:none"></div>
+      </div>
+      <div class="map-legend">
+        <span class="ml-item"><span class="ml-dot" style="background:#1a7a3c"></span>Maior produção</span>
+        <span class="ml-item"><span class="ml-dot" style="background:#9ec9a7"></span>Produção significativa</span>
+        <span class="ml-item"><span class="ml-dot" style="background:#e4dfd7"></span>Baixa/sem produção</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Maiores estados produtores — 2024</h3>
+      <p class="note" style="margin-bottom:10px">Dados ANP Anuário 2025 Tab. 4.10 — participação estimada por UF.</p>
+      <div id="stateRankWrap"></div>
+      <p class="note" id="ntStateRank"></p>
+    </div>
+  </div>
+
+  <!-- Contexto mercado -->
+  <div class="section-sep"><span>Contexto de Mercado</span></div>
+  <div class="g2-equal">
+    <div class="card">
+      <h3>Evolução do mandato de mistura — % ao diesel</h3>
+      <div class="ch h160"><canvas id="cMandato"></canvas></div>
+      <p class="note">Fonte: CNPE/ANP (legislação). B15 aprovado para 2025, B16 previsto para 2026. Cada ponto percentual de aumento representa ~550 mil m³/ano de demanda adicional.</p>
+    </div>
+    <div class="card">
+      <h3>Capacidade instalada vs produção efetiva — 2024</h3>
+      <div class="ch h160"><canvas id="cCapac"></canvas></div>
+      <p class="note">Fonte: ANP Anuário 2025 Tab. 4.9. Brasil tem capacidade nominal de ~30 mil m³/dia instalada. Utilização efetiva em 2024: ~82% — espaço para crescer sem novos investimentos.</p>
+    </div>
+  </div>
+
+</div><!-- /pg -->
+</div><!-- /app -->
+
+<script>
+// ── TEMA ────────────────────────────────────────────────────────────────────
+const txC = '#7a8394';
+Chart.defaults.font.family = "'DM Mono','Courier New',monospace";
+Chart.defaults.font.size   = 11;
+Chart.defaults.color       = txC;
+
+const C_GRN  = '#1a7a3c';
+const C_GRN2 = '#2d9e54';
+const C_AMB  = '#d97706';
+const C_RED  = '#c92a2a';
+const C_BLU  = '#1a56db';
+const C_PRP  = '#9333ea';
+const C_SLT  = '#64748b';
+
+// ── PROXY ───────────────────────────────────────────────────────────────────
+const P_PROD  = y => `/.netlify/functions/anp-proxy?tipo=producao&ano=${y}`;
+const P_GEO   = '/.netlify/functions/anp-proxy?tipo=geojson';
+
+// ── DADOS HARDCODED VERIFICADOS ─────────────────────────────────────────────
+
+// Produção nacional B100 — ANP Anuário 2025 Tab. 4.10 + histórico (mil m³/ano)
+// Fonte: ANP, EPE Conjuntura Biocombustíveis 2024
+const HIST_ANOS = [2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024];
+const HIST_PROD = [  736, 1600, 2672, 2670, 1608, 2386, 2673, 2717, 2918, 3420, 3937, 3806, 4291, 5345, 5946, 6045, 6279, 6213, 7534, 9060];
+// mil m³ — 2024: recorde histórico (~9,06 mi m³ = 9,06 bilhões de litros), +20% vs 2023
+
+// Demanda implícita = consumo diesel B nacional × % mandato
+// Diesel B consumo: ~55 bi L/ano em 2024
+const HIST_MANDATO = [2,2,2,3,3,5,5,5,5,6,7,7,7,10,11,12,12,12,13,14]; // % legal máximo S-10
+// Nota: mandato legal vs. efetivo real diferem porque S500/S1800 têm % menor
+// ── CONSUMO B100 — SÉRIE VERIFICADA ───────────────────────────────────────────
+// Metodologia híbrida:
+//   Anos com dado ANP direto (seminário anual): usa dado direto
+//   Anos sem dado ANP direto: usa produção nacional (Brasil não importa B100)
+//
+// DADOS VERIFICADOS fonte a fonte (seminários ANP):
+//   2018: ANP seminário 2019 = 5.391 bi L → 5.391 mil m³
+//   2019: ANP seminário 2020 = 5.840 bi L → 5.840 mil m³
+//   2020: ANP seminário 2021 = 6.600 bi L → 6.600 mil m³
+//   2023: ANP seminário 2025 = 7.340 bi L → 7.340 mil m³
+//   2024: ANP seminário 2025 = 8.960 bi L → 8.960 mil m³
+//
+// Nota: a inferência diesel_B × mandato_efetivo superestima por ~4-15% porque
+// o mandato de mistura máximo (ex: B13, B14) aplica-se ao diesel S-10 rodoviário;
+// diesel S500 e S1800 (marítimo/ferroviário) mantém % menor, reduzindo a média nacional.
+//
+// Mandato efetivo ponderado (quando muda no meio do ano):
+//   2018: B8 jan-fev, B10 mar-dez → eff ≈ 9.8%
+//   2019: B10 jan-ago, B11 set-dez → eff ≈ 10.3%
+//   2020: B11 jan-fev, B12 mar-dez → eff ≈ 11.8%
+//   2023: B12 jan-fev, B13 mar-dez → eff ≈ 12.8% (mas ANP reportou 7.340 = 11.2% real)
+//   2024: B12 jan, B14 fev-dez → eff ≈ 13.8% (ANP reportou 8.960 = 13.3% real)
+const HIST_CONSUMO = [
+  // 2005  2006  2007  2008  2009  2010  2011  2012  2013  2014
+     736,  1600, 2672, 2670, 1608, 2386, 2673, 2717, 2918, 3420,
+  // 2015  2016  2017  2018  2019  2020  2021  2022  2023  2024
+     3937, 3806, 4291, 5391, 5840, 6600, 6279, 6213, 7340, 8960
+]; // mil m³/ano
+// Mandato efetivo real por ano (% médio ponderado incluindo S500/S1800)
+// MANDATO_EFF removed — mandato efetivo real já está embutido na série HIST_CONSUMO
+
+// Mix matéria-prima 2024 — ANP Anuário 2025 Tab. 4.13 (% vol.)
+const MIX_2024 = { soja:74, graxos:14, bovina:6, outros:6 };
+// Fonte: ANP Boletim Trimestral Q1/2025 (base 2024)
+// soja=74%, "outros materiais graxos" (resíduos+fritura)=14%, gordura bovina=6%, outros=6%
+
+// Preços médios anuais (R$/m³) — ANP boletim semanal / EPE
+const PRICE_ANOS  = [2019, 2020, 2021, 2022, 2023, 2024];
+const PRICE_B100  = [2450, 3380, 5120, 6150, 4180, 4900]; // R$/m³ produtor ANP (2024: jan=4290 dez=6380, média anual ~4900)
+const PRICE_DIESEL= [2300, 2100, 3150, 5020, 3940, 3910]; // R$/m³ Diesel A S10 Petrobras refin.
+
+// Participação por estado 2024 — ANP Anuário 2025 Tab. 4.10 (estimativa %)
+const STATE_PART_2024 = [
+  { uf:'RS', nome:'Rio Grande do Sul',    pct:22.6, m3k:2047 },
+  { uf:'MT', nome:'Mato Grosso',          pct:20.6, m3k:1867 },
+  { uf:'GO', nome:'Goiás',                pct:15.7, m3k:1423 },
+  { uf:'PR', nome:'Paraná',               pct:12.1, m3k:1097 },
+  { uf:'MS', nome:'Mato Grosso do Sul',   pct: 7.4, m3k: 671 },
+  { uf:'MG', nome:'Minas Gerais',         pct: 5.2, m3k: 471 },
+  { uf:'SP', nome:'São Paulo',            pct: 4.1, m3k: 372 },
+  { uf:'BA', nome:'Bahia',                pct: 3.2, m3k: 290 },
+  { uf:'outros', nome:'Outros',           pct: 9.1, m3k: 825 },
+];
+
+// Capacidade instalada por região (mil m³/dia) — ANP Tab. 4.9 2024
+const CAPAC_REGIOES = ['Sul','Centro-Oeste','Nordeste','Sudeste','Norte'];
+const CAPAC_NOMINAL = [9.8, 10.2, 5.1, 3.8, 1.1];
+const CAPAC_EFETIVA = [8.9, 8.7,  3.7, 2.9, 0.7]; // ~82% utilização media
+
+// ── ESTRUTURA DE DADOS DINÂMICOS ─────────────────────────────────────────────
+// db[ano][regiao] = { meses: number[12], total: number } (m³)
+const db = {};
+let allYears = [];
+let chartMetric = 'prod';
+const CHS = {};
+
+const REGIOES_MAP = {
+  'REGIÃO SUL':'SUL', 'REGIÃO CENTRO-OESTE':'CO', 'REGIÃO NORDESTE':'NE',
+  'REGIÃO SUDESTE':'SE', 'REGIÃO NORTE':'NO',
+  'NORTE / CENTRO OESTE':'CO', // variante antiga do CSV
+  'SUL':'SUL','CENTRO-OESTE':'CO','CENTRO OESTE':'CO',
+  'NORDESTE':'NE','SUDESTE':'SE','NORTE':'NO',
+};
+const REGIOES_NOMES = { SUL:'Sul', CO:'Centro-Oeste', NE:'Nordeste', SE:'Sudeste', NO:'Norte' };
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+// ── PARSER CSV ───────────────────────────────────────────────────────────────
+function parseCSV(txt, ano) {
+  // Formato: ANO;MÊS;GRANDE REGIÃO;PRODUÇÃO  (valores em m³)
+  // OU:      Mês/Ano,Região,Produção de Biodiesel  (formato antigo)
+  const lines = txt.split('\n').filter(l => l.trim());
+  let hasSemicolon = lines[0].includes(';');
+
+  for (let i = 1; i < lines.length; i++) {
+    const raw = lines[i].trim();
+    if (!raw) continue;
+    let parts, anoVal, mesVal, regVal, prodVal;
+
+    if (hasSemicolon) {
+      parts = raw.split(';');
+      if (parts.length < 4) continue;
+      anoVal  = parseInt(parts[0]);
+      mesVal  = parts[1].trim(); // nome do mês em pt-BR
+      regVal  = parts[2].trim().toUpperCase();
+      prodVal = parseFloat((parts[3]||'0').replace(/\./g,'').replace(',','.')) || 0;
+    } else {
+      parts = raw.split(',');
+      if (parts.length < 3) continue;
+      const mm = parts[0].trim().split('/');
+      anoVal  = parseInt(mm[1]);
+      mesVal  = String(parseInt(mm[0])); // número do mês
+      regVal  = parts[1].trim().toUpperCase();
+      prodVal = parseFloat((parts[2]||'0').replace(/\./g,'').replace(',','.')) || 0;
+    }
+    if (!anoVal || anoVal < 2005) continue;
+
+    const reg = REGIOES_MAP[regVal];
+    if (!reg) continue;
+
+    const mesIdx = MESES_PT_IDX(mesVal);
+    if (mesIdx < 0) continue;
+
+    if (!db[anoVal])       db[anoVal]       = {};
+    if (!db[anoVal][reg])  db[anoVal][reg]  = { meses: new Array(12).fill(0), total: 0 };
+    db[anoVal][reg].meses[mesIdx] += prodVal;
+    db[anoVal][reg].total         += prodVal;
+  }
+  // Rebuild BR totals
+  for (const y of Object.keys(db)) rebuildBR(+y);
+}
+
+function MESES_PT_IDX(s) {
+  const n = parseInt(s);
+  if (!isNaN(n)) return n - 1;
+  const map = {
+    'JANEIRO':0,'FEVEREIRO':1,'MARÇO':2,'ABRIL':3,'MAIO':4,'JUNHO':5,
+    'JULHO':6,'AGOSTO':7,'SETEMBRO':8,'OUTUBRO':9,'NOVEMBRO':10,'DEZEMBRO':11,
+    'JAN':0,'FEV':1,'MAR':2,'ABR':3,'MAI':4,'JUN':5,
+    'JUL':6,'AGO':7,'SET':8,'OUT':9,'NOV':10,'DEZ':11,
+  };
+  return map[s.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')] ?? -1;
+}
+
+function rebuildBR(ano) {
+  if (!db[ano]) return;
+  const regs = Object.keys(db[ano]).filter(r => r !== 'BR');
+  if (!regs.length) return;
+  db[ano]['BR'] = {
+    meses: new Array(12).fill(0).map((_,m) => regs.reduce((s,r) => s + (db[ano][r].meses[m]||0), 0)),
+    total: regs.reduce((s,r) => s + (db[ano][r].total||0), 0),
+  };
+}
+
+// ── PROGRESS UI ─────────────────────────────────────────────────────────────
+function pct(p) { document.getElementById('lb').style.width=p+'%'; document.getElementById('lpct').textContent=Math.round(p)+'%'; }
+function step(n,s) { ['s1','s2','s3'].forEach((id,i)=>{ document.getElementById(id).className='ls'+(i+1===n&&s==='on'?' on':i+1<n?' ok':''); }); }
+
+// ── INIT ────────────────────────────────────────────────────────────────────
+async function init() {
+  step(1,'on'); pct(5);
+
+  const curYear = new Date().getFullYear();
+  let loaded = 0;
+  // Try to load from current year back to 2020 (each file contains 2 years of data)
+  for (let y = curYear + 1; y >= 2021; y--) {
+    try {
+      const r = await fetch(P_PROD(y));
+      if (r.ok) {
+        const t = await r.text();
+        if (t.includes('BIODIESEL') || t.includes('biodiesel') || t.includes(';')) {
+          parseCSV(t, y);
+          loaded++;
+        }
+      }
+    } catch(e) { /* silencioso */ }
+    pct(5 + (curYear + 1 - y + 1) / (curYear + 1 - 2021 + 1) * 55);
+  }
+
+  step(2,'on'); pct(65);
+  allYears = Object.keys(db).map(Number).filter(y => db[y]?.BR?.total > 0).sort((a,b)=>a-b);
+
+  // Populate year selector (newest first)
+  const sel = document.getElementById('yrSel');
+  [...allYears].reverse().forEach(y => {
+    const o = document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o);
+  });
+  // If no data from proxy, default to 2024
+  if (!allYears.length) {
+    [2024,2023,2022,2021,2020].forEach(y => {
+      const o = document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o);
+    });
+  }
+
+  document.getElementById('upd').textContent = `Atualizado: ${new Date().toLocaleDateString('pt-BR',{month:'short',year:'numeric'})}`;
+
+  step(3,'on'); pct(80);
+  renderStatic();
+  render();
+  pct(100); step(3,'ok');
+
+  document.getElementById('ld').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // Load map async
+  loadMap();
+}
+
+// ── HELPERS ─────────────────────────────────────────────────────────────────
+function fmtM3(v) {
+  if (!v || v === 0) return '0 mil m³';
+  const km3 = v / 1000;
+  if (km3 >= 1000) return km3.toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' mil m³';
+  if (km3 >= 10)   return km3.toFixed(0) + ' mil m³';
+  if (km3 >= 1)    return km3.toFixed(1) + ' mil m³';
+  return v.toFixed(0) + ' m³';
+}
+function fmtMilM3(km3) { // input already in mil m³
+  if (km3 >= 1000) return km3.toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' mil m³';
+  return km3.toFixed(0) + ' mil m³';
+}
+function dC(id) { if(CHS[id]){ CHS[id].destroy(); delete CHS[id]; } }
+function setMetric(m, btn) {
+  chartMetric = m;
+  document.querySelectorAll('.tg .t').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  // Switch the main hist chart between production+consumption and mandato view
+  renderHist();
+}
+
+// ── RENDER DINÂMICO (responde ao filtro) ─────────────────────────────────────
+function render() {
+  const reg = document.getElementById('regSel').value;
+  const ano = parseInt(document.getElementById('yrSel').value) || 2024;
+  document.getElementById('anoLabel').textContent   = ano;
+  document.getElementById('anoRank').textContent    = ano;
+  document.getElementById('mthRegLabel').textContent = reg === 'BR' ? '— Brasil' : '— ' + (REGIOES_NOMES[reg]||reg);
+
+  const dadosAno = db[ano];
+  const dadosReg = dadosAno?.[reg];
+
+  renderKPIs(reg, ano, dadosAno, dadosReg);
+  renderMensal(reg, ano, dadosReg);
+  renderRankRegiao(ano, dadosAno);
+  renderStateRank();
+}
+
+// ── KPIs ────────────────────────────────────────────────────────────────────
+function renderKPIs(reg, ano, dadosAno, dadosReg) {
+  const total     = dadosReg?.total || 0;
+  const totalBR   = dadosAno?.BR?.total || 0;
+  const prevAno   = db[ano-1]?.[reg]?.total;
+  const vp        = (total && prevAno) ? ((total-prevAno)/prevAno*100) : null;
+  const badge     = vp==null?'n':vp>=0?'up':'dn';
+  const badgeTxt  = vp!=null ? (vp>=0?'↑':'↓')+Math.abs(vp).toFixed(1)+'% vs '+(ano-1) : '—';
+
+  // Mandato vigente
+  const mandatoAtual = ano >= 2025 ? 15 : ano === 2024 ? 14 : ano === 2023 ? 13 : ano <= 2022 ? 12 : 14;
+  // Produção nacional histórica
+  const idxHist = HIST_ANOS.indexOf(ano);
+  const prodHist = idxHist >= 0 ? HIST_PROD[idxHist] : total > 0 ? Math.round(total/1000) : null;
+
+  document.getElementById('kpis').innerHTML = [
+    { l:`Produção ${ano} (${reg==='BR'?'Brasil':REGIOES_NOMES[reg]||reg})`,
+      v: total > 0 ? fmtM3(total) : prodHist ? fmtMilM3(prodHist) + '*' : '—',
+      s: total > 0 ? 'ANP dados abertos (mensal)' : 'ANP Anuário 2025 Tab. 4.10',
+      b: badge, bd: badgeTxt, c: C_GRN },
+    { l:'Participação na matriz', v: (totalBR>0&&total>0) ? (total/totalBR*100).toFixed(1)+'%' : reg==='BR'?'100%':'—',
+      s:'% do total nacional', b:'n', bd:'produção real', c:C_GRN2 },
+    { l:`Mandato de mistura ${ano}`, v:'B'+mandatoAtual,
+      s:`legal S-10; efetivo real ~${mandatoAtual-1}% (inc. S500/S1800)`, b:'up', bd:'CNPE/ANP', c:C_AMB },
+    { l:'Matéria-prima dominante', v:'Soja',
+      s:`${MIX_2024.soja}% do mix — Boletim ANP Q1/2025`, b:'n', bd:'ANP Anuário 2025', c:C_BLU },
+  ].map(k=>`<div class="kcard" style="--kc:${k.c}">
+    <div class="kl">${k.l}</div><div class="kv">${k.v}</div>
+    <div class="ks">${k.s}</div><span class="badge ${k.b}">${k.bd}</span>
+  </div>`).join('');
+}
+
+// ── MENSAL ──────────────────────────────────────────────────────────────────
+function renderMensal(reg, ano, dados) {
+  dC('cMensal');
+  if (!dados || !dados.meses.some(v=>v>0)) {
+    // Show placeholder note
+    document.getElementById('ntMensal').textContent = `Dados mensais não disponíveis via proxy para ${ano}/${reg}. Série histórica anual disponível no gráfico acima.`;
+    return;
+  }
+  const vals = dados.meses.map(v => +(v/1000).toFixed(1)); // → mil m³
+  const maxI = vals.indexOf(Math.max(...vals));
+  CHS['cMensal'] = new Chart(document.getElementById('cMensal'), {
+    type:'bar',
+    data:{ labels:MESES, datasets:[{ label:'Produção B100',
+      data:vals,
+      backgroundColor: vals.map((_,i) => i===maxI ? C_GRN : 'rgba(26,122,60,.5)'),
+      borderRadius:3
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.parsed.y.toLocaleString('pt-BR')} mil m³`}}},
+      scales:{
+        x:{grid:{display:false}, ticks:{font:{size:10}}},
+        y:{grid:{display:false}, ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'M':v+'k'}}
+      }
+    }
+  });
+  const total = vals.reduce((a,b)=>a+b,0);
+  document.getElementById('ntMensal').textContent = `Total ${ano}: ${total.toLocaleString('pt-BR',{maximumFractionDigits:0})} mil m³. Pico: ${MESES[maxI]} com ${vals[maxI].toLocaleString('pt-BR')} mil m³. Fonte: ANP dados abertos.`;
+}
+
+// ── RANKING REGIONAL ─────────────────────────────────────────────────────────
+function renderRankRegiao(ano, dadosAno) {
+  const wrap = document.getElementById('rankWrap');
+  const reg  = document.getElementById('regSel').value;
+  if (!dadosAno || !dadosAno['BR'] || dadosAno['BR'].total === 0) {
+    // Use historical data
+    const idx = HIST_ANOS.indexOf(ano);
+    if (idx < 0) { wrap.innerHTML='<div class="nodata"><div class="nd-icon">📭</div><strong>Sem dados para '+ano+'</strong></div>'; return; }
+  }
+
+  // Build regional entries from live data or show structural note
+  const totalBR = dadosAno?.BR?.total || 1;
+  const regs    = ['SUL','CO','NE','SE','NO'];
+  const entries = regs.map(r => ({
+    r, nome:REGIOES_NOMES[r],
+    val: dadosAno?.[r]?.total || 0,
+    pct: dadosAno?.[r] ? dadosAno[r].total/totalBR*100 : 0,
+  })).sort((a,b)=>b.pct-a.pct).filter(e=>e.pct>0);
+
+  if (!entries.length) {
+    wrap.innerHTML='<div class="nodata"><div class="nd-icon">📭</div><strong>Sem dados regionais para '+ano+'</strong></div>';
+    return;
+  }
+  const mx = entries[0].pct;
+  wrap.innerHTML = entries.map(e => {
+    const hi  = reg==='BR' || REGIOES_MAP['REGIÃO '+e.nome.toUpperCase()]===reg || e.r===reg;
+    const c   = e.r===reg ? '#c92a2a' : C_GRN;
+    return `<div class="rank-row" style="opacity:${hi?1:.35}">
+      <span class="rank-uf">${e.nome}</span>
+      <div class="rank-bg"><div class="rank-fill" style="width:${(e.pct/mx*100).toFixed(1)}%;background:${c}"></div></div>
+      <span class="rank-pct">${e.pct.toFixed(1)}%</span>
+      <span class="rank-val">${fmtM3(e.val)}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('ntRank').textContent = `ANP dados abertos ${ano}. Total Brasil: ${fmtM3(dadosAno?.BR?.total||0)}.`;
+}
+
+// ── RANKING POR ESTADO ───────────────────────────────────────────────────────
+function renderStateRank() {
+  const wrap = document.getElementById('stateRankWrap');
+  const mx   = STATE_PART_2024[0].pct;
+  wrap.innerHTML = STATE_PART_2024.map(e => {
+    const c = e.uf==='outros' ? C_SLT : C_GRN;
+    return `<div class="rank-row">
+      <span class="rank-uf">${e.uf==='outros'?'Outros':e.uf+' — '+e.nome.split(' ')[0]}</span>
+      <div class="rank-bg"><div class="rank-fill" style="width:${(e.pct/mx*100).toFixed(1)}%;background:${c}"></div></div>
+      <span class="rank-pct">${e.pct.toFixed(1)}%</span>
+      <span class="rank-val">${e.m3k.toLocaleString('pt-BR')} mil m³</span>
+    </div>`;
+  }).join('');
+  document.getElementById('ntStateRank').textContent = 'ANP Anuário 2025 Tab. 4.10. Sul + Centro-Oeste respondem por ~78% da produção nacional.';
+}
+
+// ── GRÁFICOS ESTÁTICOS ────────────────────────────────────────────────────────
+function renderStatic() {
+  renderHist();
+  renderMix();
+  renderPreco();
+  renderMandato();
+  renderCapac();
+}
+
+function renderHist() {
+  dC('cHist');
+  // Mandato view: show only mandato evolution with production overlay
+  if (chartMetric === 'mandato') {
+    const mandAno = [2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026];
+    const mandPct = [   2,   2,   2,   3,   3,   5,   5,   5,   5,   6,   7,   7,   7,  10,  11,  12,  12,  12,  13,  14,  15,  16];
+    CHS['cHist'] = new Chart(document.getElementById('cHist'), {
+      type:'bar',
+      data:{ labels:mandAno.map(String), datasets:[
+        { label:'Mandato de mistura (%)', data:mandPct,
+          backgroundColor: mandAno.map((_,i) => mandAno[i] >= 2025 ? 'rgba(26,122,60,.35)' : C_GRN),
+          borderRadius:3, yAxisID:'yMand' },
+        { label:'Produção B100 (mil m³)', data:[...HIST_PROD, null, null],
+          type:'line', borderColor:C_AMB, backgroundColor:'transparent',
+          borderWidth:2, pointRadius:2, yAxisID:'yProd', tension:.3, spanGaps:true }
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:true, position:'top', labels:{boxWidth:10,boxHeight:10,font:{size:10},padding:12}},
+          tooltip:{callbacks:{label:c=> c.dataset.yAxisID==='yMand'
+            ? ` Mandato: B${c.parsed.y} (${c.parsed.y}% biodiesel no diesel B)`
+            : ` Produção: ${(c.parsed.y||0).toLocaleString('pt-BR')} mil m³`
+          }}
+        },
+        scales:{
+          x:{grid:{display:false}, ticks:{maxTicksLimit:10,autoSkip:true}},
+          yMand:{type:'linear', position:'left', grid:{display:false},
+            title:{display:true,text:'Mandato (%)',color:C_GRN,font:{size:9}},
+            ticks:{color:C_GRN, callback:v=>'B'+v}, min:0, max:20},
+          yProd:{type:'linear', position:'right', grid:{display:false},
+            title:{display:true,text:'Produção (mil m³)',color:C_AMB,font:{size:9}},
+            ticks:{color:C_AMB, callback:v=>v>=1000?(v/1000).toFixed(0)+'M':v+'k'}, min:0}
+        }
+      }
+    });
+    document.getElementById('ntHist').textContent = 'Mandato legal máximo (S-10 rodoviário). B15 aprovado para 2025, B16 previsto para 2026. Cada ponto percentual adicional = ~550 mil m³/ano de demanda extra.';
+    return;
+  }
+  // Default: production + consumption view
+  // Merge historical with live data
+  const anos = [...HIST_ANOS];
+  const prod = [...HIST_PROD]; // mil m³
+  // Add live years if newer than historical
+  for (const y of allYears) {
+    if (!anos.includes(y) && y > 2024 && db[y]?.BR?.total > 0) {
+      anos.push(y);
+      prod.push(Math.round(db[y].BR.total / 1000));
+    }
+  }
+  CHS['cHist'] = new Chart(document.getElementById('cHist'), {
+    type:'bar',
+    data:{ labels:anos.map(String), datasets:[
+      { label:'Produção B100 (mil m³)', data:prod,
+        backgroundColor:prod.map((_,i)=>anos[i]===2024?C_GRN:'rgba(26,122,60,.6)'),
+        borderRadius:3, order:2 },
+      { label:'Consumo verificado B100 (mil m³)', data:HIST_CONSUMO,
+        type:'line', borderColor:C_AMB, backgroundColor:'transparent',
+        borderWidth:2, pointRadius:3, pointBackgroundColor:C_AMB,
+        tension:.3, spanGaps:true, order:1 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true, position:'top', labels:{boxWidth:10,boxHeight:10,font:{size:10},padding:12}},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.parsed.y||0).toLocaleString('pt-BR',{maximumFractionDigits:0})} mil m³`}}
+      },
+      scales:{
+        x:{grid:{display:false}, ticks:{maxTicksLimit:10,autoSkip:true}},
+        y:{grid:{display:false}, ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'M':v+'k'}}
+      }
+    }
+  });
+  document.getElementById('ntHist').textContent = 'Produção: ANP Anuário 2025 Tab. 4.10. Consumo: dados diretos ANP (seminários 2019–2025) para 2018–2020 e 2023–2024; produção ≈ consumo para demais anos (Brasil não importa B100). 2024: recorde histórico de 9.060 mil m³ produzidos, 8.960 mil m³ consumidos (+20% vs 2023), impulsionado pela elevação do mandato de B13 para B14. Diferença produção/consumo = estoque técnico (~1–5%).'  ;
+}
+
+function renderMix() {
+  dC('cMix');
+  CHS['cMix'] = new Chart(document.getElementById('cMix'), {
+    type:'doughnut',
+    data:{
+      labels:['Soja','Resíduos/mat. graxos','Gordura bovina','Outros'],
+      datasets:[{ data:[MIX_2024.soja, MIX_2024.graxos, MIX_2024.bovina, MIX_2024.outros],
+        backgroundColor:[C_GRN, C_BLU, C_AMB, C_SLT], borderWidth:0, hoverOffset:5 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'58%',
+      plugins:{
+        legend:{display:true, position:'right', labels:{boxWidth:10,boxHeight:10,font:{size:10},padding:10}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}
+      }
+    }
+  });
+}
+
+function renderPreco() {
+  dC('cPreco');
+  CHS['cPreco'] = new Chart(document.getElementById('cPreco'), {
+    type:'line',
+    data:{ labels:PRICE_ANOS.map(String), datasets:[
+      { label:'B100 produtor (R$/m³)', data:PRICE_B100, yAxisID:'yB100',
+        borderColor:C_GRN, backgroundColor:'rgba(26,122,60,.08)',
+        borderWidth:2, pointRadius:3, pointBackgroundColor:C_GRN, fill:true, tension:.4 },
+      { label:'Diesel A S10 (R$/m³)',  data:PRICE_DIESEL, yAxisID:'yDiesel',
+        borderColor:C_RED, backgroundColor:'transparent',
+        borderWidth:2, borderDash:[4,3], pointRadius:2, pointBackgroundColor:C_RED, fill:false, tension:.4 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: R$ ${(c.parsed.y||0).toLocaleString('pt-BR')}`}}
+      },
+      scales:{
+        x:{grid:{display:false}},
+        yB100:{type:'linear', position:'left', grid:{display:false},
+          title:{display:true, text:'B100 (R$/m³)', color:C_GRN, font:{size:9}},
+          ticks:{color:C_GRN, callback:v=>'R$'+Math.round(v/1000)+'k'}, min:0},
+        yDiesel:{type:'linear', position:'right', grid:{display:false},
+          title:{display:true, text:'Diesel A (R$/m³)', color:C_RED, font:{size:9}},
+          ticks:{color:C_RED, callback:v=>'R$'+Math.round(v/1000)+'k'}, min:0},
+      }
+    }
+  });
+}
+
+function renderMandato() {
+  dC('cMandato');
+  const mandAno = [2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026];
+  const mandPct = [   2,   2,   3,   3,   4,   5,   5,   5,   5,   6,   7,   7,   7,   8,  10,  12,  12,  12,  13,  14,  15,  16];
+  CHS['cMandato'] = new Chart(document.getElementById('cMandato'), {
+    type:'line',
+    data:{ labels:mandAno.map(String), datasets:[{
+      label:'Mandato (%)', data:mandPct,
+      borderColor:C_AMB, backgroundColor:'rgba(217,119,6,.10)',
+      borderWidth:2.5, pointRadius:3, pointBackgroundColor:mandAno.map((_,i)=>mandAno[i]>=2025?'rgba(217,119,6,.4)':C_AMB),
+      fill:true, tension:.2, spanGaps:true,
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>` B${c.parsed.y} (${c.parsed.y}% biodiesel)`}}},
+      scales:{
+        x:{grid:{display:false}, ticks:{maxTicksLimit:10,autoSkip:true}},
+        y:{grid:{display:false}, min:0, max:18, ticks:{callback:v=>'B'+v}}
+      }
+    }
+  });
+}
+
+function renderCapac() {
+  dC('cCapac');
+  CHS['cCapac'] = new Chart(document.getElementById('cCapac'), {
+    type:'bar',
+    data:{ labels:CAPAC_REGIOES, datasets:[
+      { label:'Capacidade nominal (mil m³/dia)', data:CAPAC_NOMINAL,
+        backgroundColor:'rgba(26,122,60,.3)', borderRadius:3 },
+      { label:'Produção efetiva (mil m³/dia)', data:CAPAC_EFETIVA,
+        backgroundColor:C_GRN, borderRadius:3 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true, position:'top', labels:{boxWidth:10,boxHeight:10,font:{size:10},padding:10}},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y} mil m³/dia`}}
+      },
+      scales:{
+        x:{grid:{display:false}},
+        y:{grid:{display:false}, ticks:{callback:v=>v+'k'}}
+      }
+    }
+  });
+}
+
+// ── MAPA ─────────────────────────────────────────────────────────────────────
+// Participação por estado para colorir o mapa
+const STATE_COLOR_MAP = {
+  RS:'#0a5c2a', MT:'#0d6b31', GO:'#1a7a3c', PR:'#277c46', MS:'#3d9960',
+  MG:'#5cb37a', SP:'#7cc494', BA:'#9ec9a7', TO:'#c0dfc8', PI:'#d4ebd9',
+  MA:'#d4ebd9', PA:'#e8f4ec', RO:'#e8f4ec', AC:'#f0f7f2', AM:'#f0f7f2',
+};
+const DEFAULT_COLOR = '#e4dfd7';
+
+let _mapD3Loaded = false, _mapGeoData = null;
+
+async function loadMap() {
+  const wrap = document.getElementById('mapWrap');
+  wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:280px;font-family:var(--f-data);font-size:11px;color:var(--ink-3)">Carregando mapa…</div><div class="map-tooltip" id="mapTip" style="display:none"></div>';
+  try {
+    if (!_mapD3Loaded) {
+      await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+      _mapD3Loaded=true;
+    }
+    if (!_mapGeoData) {
+      const r = await fetch(P_GEO);
+      if (r.ok) _mapGeoData = await r.json();
+    }
+    if (_mapGeoData) _renderMapSVG(wrap, _mapGeoData);
+    else throw new Error('no geodata');
+  } catch(e) {
+    wrap.innerHTML='<div style="padding:2rem;text-align:center;font-family:var(--f-data);font-size:11px;color:var(--ink-3)">Mapa não disponível</div>';
+  }
+}
+
+const NAME_TO_UF = {
+  'Acre':'AC','Alagoas':'AL','Amapá':'AP','Amazonas':'AM','Bahia':'BA',
+  'Ceará':'CE','Distrito Federal':'DF','Espírito Santo':'ES','Goiás':'GO',
+  'Maranhão':'MA','Mato Grosso':'MT','Mato Grosso do Sul':'MS','Minas Gerais':'MG',
+  'Pará':'PA','Paraíba':'PB','Paraná':'PR','Pernambuco':'PE','Piauí':'PI',
+  'Rio de Janeiro':'RJ','Rio Grande do Norte':'RN','Rio Grande do Sul':'RS',
+  'Rondônia':'RO','Roraima':'RR','Santa Catarina':'SC','São Paulo':'SP',
+  'Sergipe':'SE','Tocantins':'TO'
+};
+function getUF(p){ return p.sigla||p.abbrev||p.UF||NAME_TO_UF[p.name]||NAME_TO_UF[p.nome]||p.id||''; }
+
+function _renderMapSVG(wrap, geo) {
+  const tip = document.getElementById('mapTip') || (() => { const d=document.createElement('div'); d.className='map-tooltip'; d.id='mapTip'; d.style.display='none'; wrap.appendChild(d); return d; })();
+  wrap.querySelectorAll('svg').forEach(s=>s.remove());
+
+  const W=460, H=500;
+  const proj = d3.geoMercator().fitSize([W,H],geo);
+  const path = d3.geoPath().projection(proj);
+
+  const svg = d3.select(wrap).append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('width','100%').attr('height','auto').style('display','block');
+  svg.append('g').selectAll('path').data(geo.features).join('path')
+    .attr('d',path)
+    .attr('class','state-path')
+    .attr('fill', d => { const uf=getUF(d.properties); return STATE_COLOR_MAP[uf]||DEFAULT_COLOR; })
+    .attr('stroke','#fff').attr('stroke-width',.8)
+    .on('mouseenter', function(event,d) {
+      const uf  = getUF(d.properties);
+      const ste = STATE_PART_2024.find(s=>s.uf===uf);
+      if (!ste) { tip.style.display='none'; return; }
+      tip.innerHTML=`<div class="mt-title">${ste.nome}</div>
+        <div class="mt-row"><span>Produção 2024</span><span class="mt-val">${ste.m3k.toLocaleString('pt-BR')} mil m³</span></div>
+        <div class="mt-row"><span>Participação</span><span class="mt-val">${ste.pct}%</span></div>`;
+      tip.style.display='block';
+      moveMapTip(event,tip,wrap);
+    })
+    .on('mousemove', (event) => moveMapTip(event,tip,wrap))
+    .on('mouseleave', () => { tip.style.display='none'; });
+
+  // Labels
+  svg.append('g').selectAll('text').data(geo.features).join('text')
+    .attr('transform', d => { const [x,y]=path.centroid(d); return `translate(${x},${y})`; })
+    .attr('text-anchor','middle').attr('dominant-baseline','middle')
+    .attr('font-family',"'DM Mono',monospace").attr('font-size',7).attr('font-weight','600')
+    .attr('fill', d => { const uf=getUF(d.properties); return STATE_COLOR_MAP[uf] && STATE_COLOR_MAP[uf]<'#5' ? '#fff' : 'rgba(30,40,55,.5)'; })
+    .attr('pointer-events','none')
+    .text(d => getUF(d.properties));
+}
+
+function moveMapTip(event,tip,wrap) {
+  const rect=wrap.getBoundingClientRect();
+  let left=event.clientX-rect.left+14, top=event.clientY-rect.top-10;
+  if(left+260>rect.width) left=event.clientX-rect.left-274;
+  if(top<0) top=4;
+  tip.style.left=left+'px'; tip.style.top=top+'px';
+}
+
+init();
+</script>
+</body>
+</html>
