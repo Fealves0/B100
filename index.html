@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B100 Intelligence — Painel Executivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#fafbfc;color:#374151;line-height:1.5;padding:24px}
+  .container{max-width:1400px;margin:0 auto}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid #e5e7eb}
+  .logo h1{font-size:22px;font-weight:700;color:#111827;letter-spacing:-.3px}
+  .logo p{font-size:13px;color:#6b7280;margin-top:2px}
+  .btn-refresh{background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:8px}
+  .btn-refresh:hover:not(:disabled){background:#15803d;transform:translateY(-1px);box-shadow:0 4px 12px rgba(22,163,74,.25)}
+  .btn-refresh:disabled{background:#9ca3af;cursor:wait;opacity:.85}
+  .spin{display:inline-block;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:32px}
+  .kpi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:.2s}
+  .kpi:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+  .kpi-label{font-size:12px;color:#6b7280;font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .kpi-value{font-size:32px;font-weight:700;color:#111827;letter-spacing:-.5px}
+  .kpi-sub{font-size:12px;color:#16a34a;margin-top:6px;font-weight:500}
+  .kpi-sub.neutral{color:#6b7280}
+  .kpi-sub.warn{color:#ea580c}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-bottom:24px}
+  .card h2{font-size:16px;font-weight:600;color:#111827;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .card h2::before{content:'';width:4px;height:18px;background:#16a34a;border-radius:2px}
+  .map-controls{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .mode-btn{background:#f3f4f6;border:1px solid #e5e7eb;color:#374151;padding:8px 16px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:.2s}
+  .mode-btn:hover{background:#e5e7eb}
+  .mode-btn.active{background:#111827;color:#fff;border-color:#111827}
+  #map-container{position:relative;width:100%;height:600px;background:#f9fafb;border-radius:8px;overflow:hidden}
+  #map-svg{width:100%;height:100%;display:block}
+  .state-path{stroke:#fff;stroke-width:.8;cursor:pointer;transition:opacity .15s,stroke-width .15s}
+  .state-path:hover{stroke:#111827;stroke-width:2;opacity:.85}
+  .flow-line{fill:none;stroke-width:2.5;opacity:.75;stroke-dasharray:6 4;animation:flowDash 1.5s linear infinite}
+  @keyframes flowDash{to{stroke-dashoffset:-20}}
+  .flow-arrow{fill:#dc2626}
+  .map-tooltip{position:absolute;background:rgba(17,24,39,.96);color:#fff;padding:10px 14px;border-radius:8px;font-size:12px;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:10;min-width:180px}
+  .map-tooltip strong{display:block;font-size:13px;margin-bottom:6px;color:#86efac}
+  .map-tooltip .row{display:flex;justify-content:space-between;margin:3px 0}
+  .map-tooltip .row span:last-child{font-weight:600}
+  .map-legend{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px;background:#f9fafb;border-radius:8px}
+  .legend-bar{flex:1;height:14px;border-radius:4px}
+  .legend-labels{display:flex;justify-content:space-between;flex:1;font-size:11px;color:#6b7280;margin-top:4px}
+  .legend-wrap{flex:1}
+  .map-error{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#6b7280;text-align:center;padding:40px}
+  .map-error svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
+  .map-loading{display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-size:13px}
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+  .chart-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .chart-card h3{font-size:15px;font-weight:600;color:#111827;margin-bottom:16px}
+  .chart-wrap{position:relative;height:300px}
+  .insights{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px}
+  .insight{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #16a34a;border-radius:8px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .insight:nth-child(2){border-left-color:#2563eb}
+  .insight:nth-child(3){border-left-color:#ea580c}
+  .insight-title{font-size:13px;font-weight:600;color:#111827;margin-bottom:8px}
+  .insight-text{font-size:12.5px;color:#6b7280;line-height:1.6}
+  footer{text-align:center;padding:20px;color:#9ca3af;font-size:11.5px;border-top:1px solid #e5e7eb;margin-top:24px}
+  @media(max-width:900px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .charts-grid,.insights{grid-template-columns:1fr}
+    #map-container{height:450px}
+    header{flex-direction:column;gap:16px;align-items:flex-start}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <div class="logo">
+    <h1>B100 Intelligence</h1>
+    <p>Painel Executivo · Mercado Brasileiro de Biodiesel</p>
+  </div>
+  <button class="btn-refresh" id="btnRefresh" onclick="atualizarANP()">
+    <span id="btnIcon">↻</span> <span id="btnText">Atualizar dados ANP</span>
+  </button>
+</header>
+<section class="kpis">
+  <div class="kpi">
+    <div class="kpi-label">Produção 2024</div>
+    <div class="kpi-value">8,9 <span style="font-size:18px;color:#6b7280">bi L</span></div>
+    <div class="kpi-sub">▲ 8,2% vs. 2023</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Capacidade Instalada</div>
+    <div class="kpi-value">13,2 <span style="font-size:18px;color:#6b7280">bi L/ano</span></div>
+    <div class="kpi-sub neutral">Utilização média: 67%</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Mandato Vigente</div>
+    <div class="kpi-value">B15 <span style="font-size:14px;color:#6b7280">→ B16 em mar/26</span></div>
+    <div class="kpi-sub">CNPE Res. 9/2025</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Demanda 2026 (proj.)</div>
+    <div class="kpi-value">10,7 <span style="font-size:18px;color:#6b7280">bi L</span></div>
+    <div class="kpi-sub warn">+1,8 bi L vs. 2024</div>
+  </div>
+</section>
+<section class="card">
+  <h2>Mapa do Mercado — Produção, Capacidade e Fluxos Logísticos</h2>
+  <div class="map-controls">
+    <button class="mode-btn active" data-mode="prod" onclick="setMode('prod')">Produção</button>
+    <button class="mode-btn" data-mode="cap" onclick="setMode('cap')">Capacidade</button>
+    <button class="mode-btn" data-mode="bal" onclick="setMode('bal')">Balanço (Produção − Consumo)</button>
+  </div>
+  <div id="map-container">
+    <div class="map-loading" id="map-loading">Carregando mapa do Brasil…</div>
+    <svg id="map-svg" style="display:none"></svg>
+    <div class="map-tooltip" id="map-tooltip"></div>
+  </div>
+  <div class="map-legend" id="map-legend" style="display:none">
+    <span style="font-size:11px;color:#6b7280;font-weight:500">Menor</span>
+    <div class="legend-wrap">
+      <div class="legend-bar" id="legend-bar"></div>
+      <div class="legend-labels"><span id="legend-min">0</span><span id="legend-max">0</span></div>
+    </div>
+    <span style="font-size:11px;color:#6b7280;font-weight:500">Maior</span>
+  </div>
+  <p style="font-size:11px;color:#9ca3af;margin-top:10px">Linhas tracejadas: principais corredores logísticos de B100 (origem → destino). Passe o mouse sobre um estado para ver os dados detalhados.</p>
+</section>
+<section class="charts-grid">
+  <div class="chart-card">
+    <h3>Evolução do Mandato e Produção (2008–2026)</h3>
+    <div class="chart-wrap"><canvas id="chartMandato"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>Mix de Matérias-Primas 2025</h3>
+    <div class="chart-wrap"><canvas id="chartMix"></canvas></div>
+  </div>
+</section>
+<section class="insights">
+  <div class="insight">
+    <div class="insight-title">⚡ Aceleração regulatória</div>
+    <div class="insight-text">A transição B15 → B16 em 12 meses adiciona aproximadamente <strong>700 milhões de litros/ano</strong> à demanda nacional, exigindo expansão de capacidade no Sul e Centro-Oeste.</div>
+  </div>
+  <div class="insight">
+    <div class="insight-title">📍 Concentração geográfica</div>
+    <div class="insight-text">As regiões <strong>Sul + Centro-Oeste</strong> respondem por <strong>73% da produção</strong> nacional. SP, RJ e MG concentram a maior parte do consumo, gerando fluxos logísticos longos e custosos.</div>
+  </div>
+  <div class="insight">
+    <div class="insight-title">💰 Spread B100/Diesel</div>
+    <div class="insight-text">A margem está <strong>pressionada</strong> pela soja em alta (~R$ 180/saca em mai/26). Sebo bovino e outras matérias alternativas ganham relevância estratégica para diversificação.</div>
+  </div>
+</section>
+<footer>
+  v3.0 · Fontes: ANP, EPE, Abiove, CNPE · Dados de referência: Anuário Estatístico ANP 2025
+</footer>
+</div>
+<script>
+const STATES = {
+  "RS": {nome:"Rio Grande do Sul", prod:2.45, cap:3.1, cons:0.65},
+  "GO": {nome:"Goiás", prod:1.52, cap:2.05, cons:0.38},
+  "MT": {nome:"Mato Grosso", prod:1.38, cap:1.85, cons:0.29},
+  "PR": {nome:"Paraná", prod:0.91, cap:1.22, cons:0.58},
+  "SP": {nome:"São Paulo", prod:0.68, cap:0.95, cons:1.89},
+  "BA": {nome:"Bahia", prod:0.52, cap:0.78, cons:0.42},
+  "MG": {nome:"Minas Gerais", prod:0.38, cap:0.61, cons:0.82},
+  "MS": {nome:"Mato Grosso do Sul", prod:0.29, cap:0.42, cons:0.18},
+  "TO": {nome:"Tocantins", prod:0.18, cap:0.26, cons:0.08},
+  "PI": {nome:"Piauí", prod:0.15, cap:0.22, cons:0.11},
+  "MA": {nome:"Maranhão", prod:0.09, cap:0.14, cons:0.18},
+  "CE": {nome:"Ceará", prod:0.08, cap:0.12, cons:0.23},
+  "SC": {nome:"Santa Catarina", prod:0.07, cap:0.11, cons:0.31},
+  "RJ": {nome:"Rio de Janeiro", prod:0.06, cap:0.09, cons:0.48},
+  "RO": {nome:"Rondônia", prod:0.05, cap:0.08, cons:0.08},
+  "PA": {nome:"Pará", prod:0.04, cap:0.07, cons:0.19},
+  "PE": {nome:"Pernambuco", prod:0.03, cap:0.05, cons:0.29},
+  "ES": {nome:"Espírito Santo", prod:0.02, cap:0.04, cons:0.14},
+  "DF": {nome:"Distrito Federal", prod:0.02, cap:0.03, cons:0.09},
+  "AL": {nome:"Alagoas", prod:0.01, cap:0.02, cons:0.08},
+  "PB": {nome:"Paraíba", prod:0.01, cap:0.02, cons:0.11},
+  "RN": {nome:"Rio Grande do Norte", prod:0.01, cap:0.02, cons:0.09},
+  "SE": {nome:"Sergipe", prod:0.01, cap:0.02, cons:0.06},
+  "AM": {nome:"Amazonas", prod:0.01, cap:0.02, cons:0.12},
+  "AC": {nome:"Acre", prod:0.005, cap:0.01, cons:0.03},
+  "RR": {nome:"Roraima", prod:0.005, cap:0.01, cons:0.02},
+  "AP": {nome:"Amapá", prod:0.005, cap:0.01, cons:0.03}
+};
+const CAPITAIS = {
+  MT:[-56.10,-15.60], GO:[-49.25,-16.68], RS:[-51.23,-30.03], MS:[-54.64,-20.45],
+  PI:[-42.80,-5.09], SP:[-46.63,-23.55], MA:[-44.30,-2.53], PR:[-49.27,-25.43],
+  BA:[-38.51,-12.97], MG:[-43.94,-19.92], RJ:[-43.18,-22.91], SC:[-48.55,-27.59],
+  CE:[-38.54,-3.72], PE:[-34.88,-8.05], ES:[-40.34,-20.32], DF:[-47.93,-15.78],
+  TO:[-48.36,-10.18], RO:[-63.90,-8.76], PA:[-48.50,-1.46], AM:[-60.02,-3.10],
+  AC:[-67.81,-9.97], RR:[-60.67,2.82], AP:[-51.07,0.04], AL:[-35.73,-9.66],
+  PB:[-34.86,-7.12], RN:[-35.21,-5.79], SE:[-37.07,-10.91]
+};
+const FLUXOS = [
+  {from:'MT', to:'SP', volume:1.1},
+  {from:'GO', to:'SP', volume:1.4},
+  {from:'RS', to:'SP', volume:1.8},
+  {from:'MS', to:'SP', volume:0.3},
+  {from:'PI', to:'MA', volume:0.1}
+];
+let currentMode = 'prod';
+let geoData = null;
+let svg, g, projection, path;
+const GEOJSON_URLS = [
+  'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson',
+  'https://raw.githubusercontent.com/giuliano-oliveira/geodata-br-states/main/geojson/br_states.json',
+  'https://cdn.jsdelivr.net/gh/codeforamerica/click_that_hood/public/data/brazil-states.geojson'
+];
+async function loadGeoJSON() {
+  for (let i=0; i<GEOJSON_URLS.length; i++) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort(), 8000);
+      const r = await fetch(GEOJSON_URLS[i], {signal:ctrl.signal});
+      clearTimeout(t);
+      if (!r.ok) continue;
+      const j = await r.json();
+      if (j && j.features && j.features.length >= 26) {
+        console.log('GeoJSON carregado de:', GEOJSON_URLS[i]);
+        return j;
+      }
+    } catch(e) { console.warn('Falhou:', GEOJSON_URLS[i], e.message); }
+  }
+  return null;
+}
+const NOME_PARA_SIGLA = {
+  'Acre':'AC','Alagoas':'AL','Amapá':'AP','Amazonas':'AM','Bahia':'BA','Ceará':'CE',
+  'Distrito Federal':'DF','Espírito Santo':'ES','Goiás':'GO','Maranhão':'MA',
+  'Mato Grosso':'MT','Mato Grosso do Sul':'MS','Minas Gerais':'MG','Pará':'PA',
+  'Paraíba':'PB','Paraná':'PR','Pernambuco':'PE','Piauí':'PI','Rio de Janeiro':'RJ',
+  'Rio Grande do Norte':'RN','Rio Grande do Sul':'RS','Rondônia':'RO','Roraima':'RR',
+  'Santa Catarina':'SC','São Paulo':'SP','Sergipe':'SE','Tocantins':'TO'
+};
+function getSiglaFromFeature(f) {
+  const p = f.properties || {};
+  if (p.sigla) return p.sigla;
+  if (p.SIGLA) return p.SIGLA;
+  if (p.UF) return p.UF;
+  if (p.uf) return p.uf;
+  if (p.postal) return p.postal;
+  if (p.abbreviation) return p.abbreviation;
+  const nome = p.name || p.NAME || p.nome || p.NOME || p.NM_ESTADO || '';
+  if (NOME_PARA_SIGLA[nome]) return NOME_PARA_SIGLA[nome];
+  const norm = nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  for (const k in NOME_PARA_SIGLA) {
+    const kn = k.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if (kn.toLowerCase() === norm.toLowerCase()) return NOME_PARA_SIGLA[k];
+  }
+  return null;
+}
+function getValue(sigla, mode) {
+  const s = STATES[sigla];
+  if (!s) return 0;
+  if (mode === 'prod') return s.prod;
+  if (mode === 'cap') return s.cap;
+  if (mode === 'bal') return s.prod - s.cons;
+  return 0;
+}
+function getColorScale(mode) {
+  const values = Object.keys(STATES).map(k => getValue(k, mode));
+  const min = d3.min(values), max = d3.max(values);
+  if (mode === 'bal') {
+    const abs = Math.max(Math.abs(min), Math.abs(max));
+    return {scale: d3.scaleSequential(d3.interpolateRdYlGn).domain([-abs, abs]), min:-abs, max:abs};
+  }
+  const interpolator = mode === 'prod' ? d3.interpolateGreens : d3.interpolateBlues;
+  return {scale: d3.scaleSequential(interpolator).domain([min*0.3, max]), min, max};
+}
+async function initMap() {
+  geoData = await loadGeoJSON();
+  const container = document.getElementById('map-container');
+  const loading = document.getElementById('map-loading');
+  if (!geoData) {
+    loading.style.display = 'none';
+    container.insertAdjacentHTML('beforeend',
+      '<div class="map-error"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><strong>Não foi possível carregar o mapa</strong><p style="font-size:12px;margin-top:6px">Verifique sua conexão e recarregue a página (F5).</p></div>');
+    return;
+  }
+  loading.style.display = 'none';
+  document.getElementById('map-svg').style.display = 'block';
+  document.getElementById('map-legend').style.display = 'flex';
+  const width = container.clientWidth || 1200;
+  const height = 600;
+  svg = d3.select('#map-svg').attr('viewBox', `0 0 ${width} ${height}`);
+  svg.selectAll('*').remove();
+  projection = d3.geoMercator().fitSize([width-40, height-40], geoData);
+  path = d3.geoPath().projection(projection);
+  g = svg.append('g').attr('transform', 'translate(20,20)');
+  const defs = svg.append('defs');
+  defs.append('marker')
+    .attr('id','arrow').attr('viewBox','0 -5 10 10').attr('refX',8).attr('refY',0)
+    .attr('markerWidth',8).attr('markerHeight',8).attr('orient','auto')
+    .append('path').attr('d','M0,-5L10,0L0,5').attr('class','flow-arrow').style('fill','#dc2626');
+  drawStates();
+  drawFlows();
+}
+function drawStates() {
+  const {scale, min, max} = getColorScale(currentMode);
+  g.selectAll('.state-path').remove();
+  g.selectAll('.state-label').remove();
+  g.selectAll('.state-path')
+    .data(geoData.features)
+    .enter()
+    .append('path')
+    .attr('class','state-path')
+    .attr('d', path)
+    .attr('fill', d => {
+      const sigla = getSiglaFromFeature(d);
+      if (!sigla) return '#e5e7eb';
+      return scale(getValue(sigla, currentMode));
+    })
+    .on('mousemove', function(event, d){
+      const sigla = getSiglaFromFeature(d);
+      if (!sigla) return;
+      showTooltip(event, sigla);
+    })
+    .on('mouseleave', hideTooltip);
+  g.selectAll('.state-label')
+    .data(geoData.features)
+    .enter()
+    .append('text')
+    .attr('class','state-label')
+    .attr('x', d => path.centroid(d)[0])
+    .attr('y', d => path.centroid(d)[1])
+    .attr('text-anchor','middle')
+    .attr('font-size','10px')
+    .attr('font-weight','600')
+    .attr('fill','#fff')
+    .attr('pointer-events','none')
+    .attr('style','text-shadow:0 0 3px rgba(0,0,0,.6)')
+    .text(d => getSiglaFromFeature(d) || '');
+  updateLegend(min, max);
+}
+function drawFlows() {
+  g.selectAll('.flow-line').remove();
+  FLUXOS.forEach(f => {
+    const o = CAPITAIS[f.from], d = CAPITAIS[f.to];
+    if (!o || !d) return;
+    const p1 = projection(o), p2 = projection(d);
+    if (!p1 || !p2) return;
+    const mx = (p1[0]+p2[0])/2, my = (p1[1]+p2[1])/2 - 30;
+    g.append('path')
+      .attr('class','flow-line')
+      .attr('d', `M${p1[0]},${p1[1]} Q${mx},${my} ${p2[0]},${p2[1]}`)
+      .attr('stroke','#dc2626')
+      .attr('stroke-width', 1.5 + f.volume*1.2)
+      .attr('marker-end','url(#arrow)');
+  });
+}
+function updateLegend(min, max) {
+  const bar = document.getElementById('legend-bar');
+  let gradient;
+  if (currentMode === 'bal') gradient = 'linear-gradient(to right, #d73027, #fee08b, #1a9850)';
+  else if (currentMode === 'prod') gradient = 'linear-gradient(to right, #e5f5e0, #31a354, #00441b)';
+  else gradient = 'linear-gradient(to right, #deebf7, #3182bd, #08306b)';
+  bar.style.background = gradient;
+  document.getElementById('legend-min').textContent = formatNum(min) + ' M m³';
+  document.getElementById('legend-max').textContent = formatNum(max) + ' M m³';
+}
+function formatNum(n) {
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function showTooltip(event, sigla) {
+  const s = STATES[sigla];
+  if (!s) return;
+  const t = document.getElementById('map-tooltip');
+  const util = s.cap > 0 ? (s.prod/s.cap*100).toFixed(0) : 0;
+  const bal = s.prod - s.cons;
+  const balTxt = bal >= 0 ? `<span style="color:#86efac">+${formatNum(bal)}</span>` : `<span style="color:#fca5a5">${formatNum(bal)}</span>`;
+  t.innerHTML = `<strong>${s.nome} (${sigla})</strong>
+    <div class="row"><span>Produção:</span><span>${formatNum(s.prod)} M m³</span></div>
+    <div class="row"><span>Capacidade:</span><span>${formatNum(s.cap)} M m³</span></div>
+    <div class="row"><span>Utilização:</span><span>${util}%</span></div>
+    <div class="row"><span>Consumo:</span><span>${formatNum(s.cons)} M m³</span></div>
+    <div class="row"><span>Balanço:</span><span>${balTxt} M m³</span></div>`;
+  const rect = document.getElementById('map-container').getBoundingClientRect();
+  const x = event.clientX - rect.left + 15;
+  const y = event.clientY - rect.top + 15;
+  t.style.left = Math.min(x, rect.width - 220) + 'px';
+  t.style.top = y + 'px';
+  t.style.opacity = 1;
+}
+function hideTooltip() { document.getElementById('map-tooltip').style.opacity = 0; }
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  if (g) drawStates();
+}
+function initCharts() {
+  new Chart(document.getElementById('chartMandato'), {
+    type: 'line',
+    data: {
+      labels: ['2008','2010','2012','2014','2016','2018','2020','2022','2023','2024','2025','2026'],
+      datasets: [
+        {label:'Produção (bi L)', data:[1.2,2.4,2.7,3.4,3.8,5.4,6.4,6.3,8.2,8.9,9.8,10.7],
+         borderColor:'#16a34a', backgroundColor:'rgba(22,163,74,.12)', yAxisID:'y', tension:.35, fill:true, pointRadius:3},
+        {label:'Mandato (%)', data:[3,5,5,7,7,10,12,10,12,14,15,16],
+         borderColor:'#2563eb', backgroundColor:'transparent', yAxisID:'y1', tension:.2, pointRadius:3, borderDash:[4,4]}
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {legend:{display:true, position:'bottom', labels:{boxWidth:12, font:{size:11}}}, tooltip:{mode:'index', intersect:false}},
+      scales: {
+        y:{position:'left', title:{display:true,text:'Produção (bi L)',font:{size:11}}, beginAtZero:true},
+        y1:{position:'right', title:{display:true,text:'Mandato (%)',font:{size:11}}, beginAtZero:true, grid:{drawOnChartArea:false}, max:20}
+      }
+    }
+  });
+  new Chart(document.getElementById('chartMix'), {
+    type: 'doughnut',
+    data: {
+      labels:['Óleo de Soja','Sebo Bovino','Óleo de Algodão','Gordura de Porco','Outros'],
+      datasets:[{data:[70,12,5,3,10], backgroundColor:['#16a34a','#a16207','#0891b2','#db2777','#6b7280'], borderWidth:2, borderColor:'#fff'}]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {legend:{display:true, position:'right', labels:{boxWidth:14, font:{size:11.5}, padding:12}},
+                tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}%`}}}
+    }
+  });
+}
+async function atualizarANP() {
+  const btn = document.getElementById('btnRefresh');
+  const icon = document.getElementById('btnIcon');
+  const text = document.getElementById('btnText');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  icon.innerHTML = '↻'; icon.className = 'spin';
+  text.textContent = 'Buscando dados…';
+  const timeout = new Promise(resolve => setTimeout(() => resolve({ok:false, reason:'timeout'}), 25000));
+  const fetchPromise = tentarBuscarANP();
+  const result = await Promise.race([fetchPromise, timeout]);
+  icon.className = '';
+  if (result.ok) {
+    icon.innerHTML = '✓'; text.textContent = 'Dados atualizados';
+    setTimeout(resetBtn, 5000);
+  } else {
+    icon.innerHTML = '⚠';
+    text.textContent = result.reason === 'timeout' ? 'Servidor ANP indisponível' : 'Falha na atualização';
+    btn.title = 'Os servidores da ANP não estão respondendo. Os dados embarcados (Anuário 2025) permanecem ativos.';
+    setTimeout(resetBtn, 6000);
+  }
+}
+function resetBtn() {
+  const btn = document.getElementById('btnRefresh');
+  document.getElementById('btnIcon').innerHTML = '↻';
+  document.getElementById('btnText').textContent = 'Atualizar dados ANP';
+  btn.disabled = false; btn.title = '';
+}
+async function tentarBuscarANP() {
+  const ano = 2025;
+  const anpUrl = `https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/arquivos-producao-de-biocombustiveis/producao-biodiesel-m3-${ano}.csv`;
+  const proxies = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url=', 'https://api.codetabs.com/v1/proxy?quest='];
+  for (const p of proxies) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort(), 7000);
+      const r = await fetch(p + encodeURIComponent(anpUrl), {signal: ctrl.signal});
+      clearTimeout(t);
+      if (r.ok) {
+        const txt = await r.text();
+        if (txt && txt.length > 200) return {ok: true};
+      }
+    } catch(e) {}
+  }
+  return {ok: false, reason: 'cors'};
+}
+window.addEventListener('DOMContentLoaded', () => { initCharts(); initMap(); });
+window.addEventListener('resize', () => { if (geoData) initMap(); });
+</script>
+</body>
+</html>
